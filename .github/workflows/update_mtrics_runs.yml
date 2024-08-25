@@ -6,7 +6,7 @@ on:
       action_name:
         description: 'Name of the action to check'
         required: true
-      port_payload:
+      runId:
         description: 'Payload for Port software operations'
         required: true
       property_to_update:
