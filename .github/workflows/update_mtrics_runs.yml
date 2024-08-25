@@ -58,7 +58,7 @@ jobs:
 
       - name: Update Entity with Number of Runs
         run: |
-          curl -X 'POST' \
+          curl -X 'PATCH' \
             'https://api.getport.io/v1/blueprints/metrics/entities?upsert=true&validation_only=false&create_missing_related_entities=false&merge=false' \
             -H 'accept: */*' \
             -H "Authorization: Bearer ${{ steps.get_access_token.outputs.access_token }}" \
