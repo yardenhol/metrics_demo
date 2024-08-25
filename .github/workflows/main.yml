@@ -1,0 +1,80 @@
+name: Update Port Metrics
+
+on:
+  workflow_dispatch:  # Allows manual triggering with inputs
+    inputs:
+      action_name:
+        description: 'Name of the action to check'
+        required: true
+      run_id:
+        description: 'Run ID of the action'
+        required: true
+      property_to_update:
+        description: 'The property in the entity to update'
+        required: true
+
+jobs:
+  update-port-metrics:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get Access Token
+        id: get_access_token
+        run: |
+          access_token=$(curl --location --request POST 'https://api.getport.io/v1/auth/access_token' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{
+              "clientId": "${{ secrets.PORT_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.PORT_CLIENT_SECRET }}"
+          }' | jq '.accessToken' | sed 's/"//g')
+          echo "::set-output name=access_token::$access_token"
+
+      - name: Post Log - Start
+        run: |
+          curl -X 'POST' \
+            'https://api.getport.io/v1/actions/runs/${{ github.event.inputs.run_id }}/logs' \
+            -H 'accept: */*' \
+            -H "Authorization: Bearer ${{ steps.get_access_token.outputs.access_token }}" \
+            -H 'Content-Type: application/json' \
+            -d '{
+            "message": "Checking action data ${{ github.event.inputs.action_name }}"
+          }'
+
+      - name: Calculate Number of Successful Runs
+        id: calculate_runs
+        run: |
+          number_of_runs=$(curl -X 'GET' \
+            "https://api.getport.io/v1/actions/runs?version=v2&action=${{ github.event.inputs.action_name }}" \
+            -H 'accept: */*' \
+            -H "Authorization: Bearer ${{ steps.get_access_token.outputs.access_token }}" | jq -r '.runs | map(select(.status == "SUCCESS")) | length')
+          echo "Number of successful runs: $number_of_runs"
+          echo "::set-output name=number_of_runs::$number_of_runs"
+
+      - name: Update Entity with Number of Runs
+        run: |
+          curl -X 'POST' \
+            'https://api.getport.io/v1/blueprints/metrics/entities?upsert=true&validation_only=false&create_missing_related_entities=false&merge=false' \
+            -H 'accept: */*' \
+            -H "Authorization: Bearer ${{ steps.get_access_token.outputs.access_token }}" \
+            -H 'Content-Type: application/json' \
+            -d '{
+            "identifier": "${{ github.event.inputs.action_name }}",
+            "properties": {
+              "${{ github.event.inputs.property_to_update }}" : "${{ steps.calculate_runs.outputs.number_of_runs }}"
+            }
+          }'
+
+      - name: Post Log - Finish
+        run: |
+          curl -X 'POST' \
+            'https://api.getport.io/v1/actions/runs/${{ github.event.inputs.run_id }}/logs' \
+            -H 'accept: */*' \
+            -H "Authorization: Bearer ${{ steps.get_access_token.outputs.access_token }}" \
+            -H 'Content-Type: application/json' \
+            -d '{
+            "message": "Finished updating",
+            "terminationStatus": "SUCCESS"
+          }'
