@@ -6,8 +6,8 @@ on:
       action_name:
         description: 'Name of the action to check'
         required: true
-      run_id:
-        description: 'Run ID of the action'
+      port_payload:
+        description: Payload for Port software operations
         required: true
       property_to_update:
         description: 'The property in the entity to update'
