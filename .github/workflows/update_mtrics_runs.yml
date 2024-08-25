@@ -7,7 +7,7 @@ on:
         description: 'Name of the action to check'
         required: true
       port_payload:
-        description: Payload for Port software operations
+        description: 'Payload for Port software operations'
         required: true
       property_to_update:
         description: 'The property in the entity to update'
@@ -35,7 +35,7 @@ jobs:
       - name: Post Log - Start
         run: |
           curl -X 'POST' \
-            'https://api.getport.io/v1/actions/runs/${{ github.event.inputs.run_id }}/logs' \
+            "https://api.getport.io/v1/actions/runs/${{ fromJson(github.event.inputs.port_payload).runId }}/logs" \
             -H 'accept: */*' \
             -H "Authorization: Bearer ${{ steps.get_access_token.outputs.access_token }}" \
             -H 'Content-Type: application/json' \
@@ -70,7 +70,7 @@ jobs:
       - name: Post Log - Finish
         run: |
           curl -X 'POST' \
-            'https://api.getport.io/v1/actions/runs/${{ github.event.inputs.run_id }}/logs' \
+            "https://api.getport.io/v1/actions/runs/${{ fromJson(github.event.inputs.port_payload).runId }}/logs" \
             -H 'accept: */*' \
             -H "Authorization: Bearer ${{ steps.get_access_token.outputs.access_token }}" \
             -H 'Content-Type: application/json' \
