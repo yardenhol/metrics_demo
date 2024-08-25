@@ -3,6 +3,9 @@ name: Update Port Metrics
 on:
   workflow_dispatch:  # Allows manual triggering with inputs
     inputs:
+      metric:
+        description: 'Name of the metric to update'
+        required: true
       action_name:
         description: 'Name of the action to check'
         required: true
@@ -61,7 +64,7 @@ jobs:
             -H "Authorization: Bearer ${{ steps.get_access_token.outputs.access_token }}" \
             -H 'Content-Type: application/json' \
             -d '{
-            "identifier": "${{ github.event.inputs.action_name }}",
+            "identifier": "${{ github.event.inputs.metric }}",
             "properties": {
               "${{ github.event.inputs.property_to_update }}" : "${{ steps.calculate_runs.outputs.number_of_runs }}"
             }
